@@ -6,7 +6,10 @@ const messageInput = document.getElementById("messageInput"),
     chatBox = document.getElementById("chat-box"),
     feedback = document.getElementById("feedback");
 
+const nickname = localStorage.getItem("nickname");
 // Emit Events
+
+socket.emit("login", nickname);
 chatForm.addEventListener("submit", (e) => {
     e.preventDefault();
     if (messageInput.value) {
@@ -17,14 +20,18 @@ chatForm.addEventListener("submit", (e) => {
     }
 });
 
+messageInput.addEventListener("keypress", () => {
+    socket.emit("isTyping", {name: "میلاد فلاح"})
+})
 // Listening
 socket.on("chat message", (data) => {
+    feedback.innerHTML = "";
     chatBox.innerHTML += `
                         <li class="alert alert-light">
                             <span
                                 class="text-dark font-weight-normal"
                                 style="font-size: 13pt"
-                                >یونس قربانی</span
+                                >میلاد فلاح</span
                             >
                             <span
                                 class="
@@ -42,4 +49,8 @@ socket.on("chat message", (data) => {
                             ${data.message}
                             </p>
                         </li>`;
+});
+
+socket.on("isTyping", data => {
+    feedback.innerHTML = `<p class="alert-warning w-25"> <em>${data.name} در حال نوشتن... </em></p>`;
 });

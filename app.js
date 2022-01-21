@@ -19,9 +19,13 @@ server.listen(PORT, () => {
 // Setup websocket
 
 io.on("connection", (socket) => {
-    console.log(`User connected. ${socket.id}`);
 
     // Listening
+
+    socket.on("login", data => {
+        console.log(`${data} connected.`);
+    })
+
     socket.on("disconnect", () => {
         console.log(`User disconnected. ${socket.id}`);
     });
@@ -29,5 +33,8 @@ io.on("connection", (socket) => {
     socket.on("chat message", (data) => {
         console.log(data);
         io.sockets.emit("chat message", data);
+    });
+    socket.on("isTyping", (data) => {
+        socket.broadcast.emit("isTyping", data);
     });
 });
