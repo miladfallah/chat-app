@@ -5,25 +5,42 @@ const messageInput = document.getElementById("messageInput"),
     chatForm = document.getElementById("chatForm"),
     chatBox = document.getElementById("chat-box"),
     feedback = document.getElementById("feedback");
+    onlineUsers = document.getElementById("online-users-list");
+    chatContainer = document.getElementById("chatContainer");
 
 const nickname = localStorage.getItem("nickname");
 // Emit Events
 
 socket.emit("login", nickname);
+
 chatForm.addEventListener("submit", (e) => {
     e.preventDefault();
     if (messageInput.value) {
         socket.emit("chat message", {
             message: messageInput.value,
+            name: nickname
         });
         messageInput.value = "";
     }
 });
 
 messageInput.addEventListener("keypress", () => {
-    socket.emit("isTyping", {name: "میلاد فلاح"})
+    socket.emit("isTyping", {name: nickname})
 })
 // Listening
+
+socket.on("online", data => {
+    onlineUsers.innerHTML = "";
+    Object.values(data).forEach((value) => {
+        onlineUsers.innerHTML += `
+            <li class="alert alert-light p-1 mx-2">
+                ${value}
+                <span class="badge badge-success">آنلاین</span>
+            </li>
+            `;  
+    })
+})
+
 socket.on("chat message", (data) => {
     feedback.innerHTML = "";
     chatBox.innerHTML += `
@@ -31,7 +48,7 @@ socket.on("chat message", (data) => {
                             <span
                                 class="text-dark font-weight-normal"
                                 style="font-size: 13pt"
-                                >میلاد فلاح</span
+                                >${data.name}</span
                             >
                             <span
                                 class="
@@ -49,6 +66,7 @@ socket.on("chat message", (data) => {
                             ${data.message}
                             </p>
                         </li>`;
+    chatContainer.scrollTop = chatContainer.scrollHeight - chatContainer.clientHeight;
 });
 
 socket.on("isTyping", data => {

@@ -2,6 +2,7 @@ const http = require("http");
 
 const express = require("express");
 const { Server } = require("socket.io");
+const { links } = require("express/lib/response");
 
 const app = express(); //? Request Handler Valid createServer()
 const server = http.createServer(app);
@@ -18,16 +19,22 @@ server.listen(PORT, () => {
 
 // Setup websocket
 
+const users = {};
+
 io.on("connection", (socket) => {
 
     // Listening
 
-    socket.on("login", data => {
-        console.log(`${data} connected.`);
+    socket.on("login", nickname => {
+        console.log(`${nickname} connected.`);
+        users[socket.id] = nickname;
+        io.sockets.emit("online", users);
     })
 
     socket.on("disconnect", () => {
         console.log(`User disconnected. ${socket.id}`);
+        delete users[socket.id];
+        io.sockets.emit("online", users);
     });
 
     socket.on("chat message", (data) => {
