@@ -44,4 +44,9 @@ io.on("connection", (socket) => {
     socket.on("isTyping", (data) => {
         socket.broadcast.emit("isTyping", data);
     });
+    socket.on("pvChat", (data) => {
+        console.log(`private chat adata: ${data}`);
+        console.log(data.to);
+        io.to(data.to).emit("pvChat", data);
+    })
 });
