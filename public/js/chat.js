@@ -12,10 +12,11 @@ const messageInput = document.getElementById("messageInput"),
     modalTitle = document.getElementById("modalTitle"),
     pvChatMessage = document.getElementById("pvChatMessage");
 
-const nickname = localStorage.getItem("nickname");
+const nickname = localStorage.getItem("nickname"),
+    roomNumber = localStorage.getItem("chatroom");
 let socketId;
 // Emit Events
-socket.emit("login", nickname);
+socket.emit("login", { nickname, roomNumber });
 
 chatForm.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -23,13 +24,14 @@ chatForm.addEventListener("submit", (e) => {
         socket.emit("chat message", {
             message: messageInput.value,
             name: nickname,
+            roomNumber,
         });
         messageInput.value = "";
     }
 });
 
 messageInput.addEventListener("keypress", () => {
-    socket.emit("typing", { name: nickname });
+    socket.emit("typing", { name: nickname, roomNumber });
 });
 
 pvChatForm.addEventListener("submit", (e) => {
@@ -39,7 +41,7 @@ pvChatForm.addEventListener("submit", (e) => {
         message: pvMessageInput.value,
         name: nickname,
         to: socketId,
-        from: socket.id
+        from: socket.id,
     });
 
     $("#pvChat").modal("hide");
@@ -51,15 +53,19 @@ socket.on("online", (users) => {
     onlineUsers.innerHTML = "";
 
     for (const socketId in users) {
-        onlineUsers.innerHTML += `
+        if (roomNumber === users[socketId].roomNumber) {
+            onlineUsers.innerHTML += `
             <li >
-                <button type="button" class="btn btn-light mx-2 p-2" data-toggle="modal" data-target="#pvChat" data-id=${socketId} data-client=${users[socketId]}
-                ${users[socketId] === nickname ? "disabled" : ""}>
-                ${users[socketId]}
+                <button type="button" class="btn btn-light mx-2 p-2" data-toggle="modal" data-target="#pvChat" data-id=${socketId} data-client=${
+                users[socketId].nickname
+            }
+                ${users[socketId].nickname === nickname ? "disabled" : ""}>
+                ${users[socketId].nickname}
                     <span class="badge badge-success"> </span>
                 </button>
             </li>
         `;
+        }
     }
 });
 
@@ -93,13 +99,14 @@ socket.on("chat message", (data) => {
 });
 
 socket.on("typing", (data) => {
-    feedback.innerHTML = `<p class="alert alert-warning w-25"><em>${data.name} در حال نوشتن است ... </em></p>`;
+    if (roomNumber === data.roomNumber)
+        feedback.innerHTML = `<p class="alert alert-warning w-25"><em>${data.name} در حال نوشتن است ... </em></p>`;
 });
 
 socket.on("pvChat", (data) => {
     $("#pvChat").modal("show");
     socketId = data.from;
-    modalTitle.innerHTML = "دریافت پیام از طرف: " + data.name;
+    modalTitle.innerHTML = "دریافت پیام از طرف : " + data.name;
     pvChatMessage.style.display = "block";
     pvChatMessage.innerHTML = data.name + " : " + data.message;
 });

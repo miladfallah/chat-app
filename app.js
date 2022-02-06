@@ -2,7 +2,6 @@ const http = require("http");
 
 const express = require("express");
 const { Server } = require("socket.io");
-const { links } = require("express/lib/response");
 
 const app = express(); //? Request Handler Valid createServer()
 const server = http.createServer(app);
@@ -22,31 +21,38 @@ server.listen(PORT, () => {
 const users = {};
 
 io.on("connection", (socket) => {
+    // console.log(`User connected. ${socket.id}`);
 
     // Listening
 
-    socket.on("login", nickname => {
-        console.log(`${nickname} connected.`);
-        users[socket.id] = nickname;
+    socket.on("login", (data) => {
+        console.log(`${data.nickname} Connected.`);
+        socket.join(data.roomNumber);
+
+        users[socket.id] = {
+            nickname: data.nickname,
+            roomNumber: data.roomNumber,
+        };
         io.sockets.emit("online", users);
-    })
+    });
 
     socket.on("disconnect", () => {
-        console.log(`User disconnected. ${socket.id}`);
+        console.log(`User disconnected.`);
         delete users[socket.id];
         io.sockets.emit("online", users);
     });
 
     socket.on("chat message", (data) => {
-        console.log(data);
-        io.sockets.emit("chat message", data);
+        io.to(data.roomNumber).emit("chat message", data);
     });
-    socket.on("isTyping", (data) => {
-        socket.broadcast.emit("isTyping", data);
+
+    socket.on("typing", (data) => {
+        socket.to(data.roomNumber).emit("typing", data);
     });
+
     socket.on("pvChat", (data) => {
-        console.log(`private chat adata: ${data}`);
+        console.log(`Private Chat Data: ${data}`);
         console.log(data.to);
         io.to(data.to).emit("pvChat", data);
-    })
+    });
 });
