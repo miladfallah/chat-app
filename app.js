@@ -20,7 +20,20 @@ server.listen(PORT, () => {
 
 const users = {};
 
-io.on("connection", (socket) => {
+// io.use((socket, next) => {
+//     const token = socket.handshake.auth.token;
+//     const id = 123456;
+//     if(token == undefined) {
+//         console.log("clienct is not connecting");
+//     } else if(token != id) {
+//         console.log("you can't login!");
+//     } else if(token == id) {
+//         next();
+//     }
+// });
+const chatNamespace = io.of("/chat");
+
+chatNamespace.on("connection", (socket) => {
     // console.log(`User connected. ${socket.id}`);
 
     // Listening
@@ -33,26 +46,26 @@ io.on("connection", (socket) => {
             nickname: data.nickname,
             roomNumber: data.roomNumber,
         };
-        io.sockets.emit("online", users);
+        chatNamespace.emit("online", users);
     });
 
     socket.on("disconnect", () => {
         console.log(`User disconnected.`);
         delete users[socket.id];
-        io.sockets.emit("online", users);
+        chatNamespace.emit("online", users);
     });
 
     socket.on("chat message", (data) => {
-        io.to(data.roomNumber).emit("chat message", data);
+        chatNamespace.to(data.roomNumber).emit("chat message", data);
     });
 
     socket.on("typing", (data) => {
-        socket.to(data.roomNumber).emit("typing", data);
+        socket.broadcast.in(data.roomNumber).emit("typing", data);
     });
 
     socket.on("pvChat", (data) => {
         console.log(`Private Chat Data: ${data}`);
         console.log(data.to);
-        io.to(data.to).emit("pvChat", data);
+        chatNamespace.to(data.to).emit("pvChat", data);
     });
 });

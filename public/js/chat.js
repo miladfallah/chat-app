@@ -1,4 +1,10 @@
-const socket = io();
+ // const socket = io({    
+//     auth: {
+//         token: 123456,
+//     },
+ // });
+
+ const chatNamespace = io("/chat");
 
 //Query DOM
 const messageInput = document.getElementById("messageInput"),
@@ -16,12 +22,12 @@ const nickname = localStorage.getItem("nickname"),
     roomNumber = localStorage.getItem("chatroom");
 let socketId;
 // Emit Events
-socket.emit("login", { nickname, roomNumber });
+chatNamespace.emit("login", { nickname, roomNumber });
 
 chatForm.addEventListener("submit", (e) => {
     e.preventDefault();
     if (messageInput.value) {
-        socket.emit("chat message", {
+        chatNamespace.emit("chat message", {
             message: messageInput.value,
             name: nickname,
             roomNumber,
@@ -31,17 +37,17 @@ chatForm.addEventListener("submit", (e) => {
 });
 
 messageInput.addEventListener("keypress", () => {
-    socket.emit("typing", { name: nickname, roomNumber });
+    chatNamespace.emit("typing", { name: nickname, roomNumber });
 });
 
 pvChatForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    socket.emit("pvChat", {
+    chatNamespace.emit("pvChat", {
         message: pvMessageInput.value,
         name: nickname,
         to: socketId,
-        from: socket.id,
+        from: chatNamespace.id,
     });
 
     $("#pvChat").modal("hide");
@@ -49,7 +55,7 @@ pvChatForm.addEventListener("submit", (e) => {
 });
 // Listening
 
-socket.on("online", (users) => {
+chatNamespace.on("online", (users) => {
     onlineUsers.innerHTML = "";
 
     for (const socketId in users) {
@@ -69,7 +75,7 @@ socket.on("online", (users) => {
     }
 });
 
-socket.on("chat message", (data) => {
+chatNamespace.on("chat message", (data) => {
     feedback.innerHTML = "";
     chatBox.innerHTML += `
                         <li class="alert alert-light">
@@ -98,12 +104,12 @@ socket.on("chat message", (data) => {
         chatContainer.scrollHeight - chatContainer.clientHeight;
 });
 
-socket.on("typing", (data) => {
+chatNamespace.on("typing", (data) => {
     if (roomNumber === data.roomNumber)
         feedback.innerHTML = `<p class="alert alert-warning w-25"><em>${data.name} در حال نوشتن است ... </em></p>`;
 });
 
-socket.on("pvChat", (data) => {
+chatNamespace.on("pvChat", (data) => {
     $("#pvChat").modal("show");
     socketId = data.from;
     modalTitle.innerHTML = "دریافت پیام از طرف : " + data.name;
